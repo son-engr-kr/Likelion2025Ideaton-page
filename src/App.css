@@ -157,30 +157,9 @@
   font-size: 1rem;
   font-weight: 500;
   white-space: nowrap;
-  opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
   z-index: 10;
-}
-
-.image-caption.visible {
-  opacity: 1;
-  animation: fadeInOut 5s ease;
-}
-
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
 }
 
 .series-image-item img:not([src]) {

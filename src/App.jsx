@@ -43,9 +43,7 @@ const UI_SERIES = [
 
 function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
   const itemRef = useRef(null)
-  const [isVisible, setIsVisible] = useState(false)
-  const lastShownTimeRef = useRef(0)
-  const isAnimatingRef = useRef(false)
+  const [opacity, setOpacity] = useState(0)
 
   useEffect(() => {
     if (!containerRef || !itemRef.current) return
@@ -59,36 +57,24 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
       const containerRect = container.getBoundingClientRect()
       const itemRect = item.getBoundingClientRect()
       
-      const containerCenter = containerRect.left + containerRect.width / 2
-      const itemCenter = itemRect.left + itemRect.width / 2
+      const containerCenterX = containerRect.left + containerRect.width / 2
+      const itemCenterX = itemRect.left + itemRect.width / 2
       
-      const distance = Math.abs(containerCenter - itemCenter)
-      const isMobile = window.innerWidth <= 768
-      const threshold = isMobile ? containerRect.width * 0.5 : containerRect.width * 0.3
+      const distance = Math.abs(containerCenterX - itemCenterX)
+      const threshold = containerRect.width * 0.5
       
-      const now = Date.now()
-      const timeSinceLastShow = now - lastShownTimeRef.current
+      let newOpacity = 0
       
-      if (distance < threshold && timeSinceLastShow > 6000 && !isAnimatingRef.current) {
-        setIsVisible(true)
-        lastShownTimeRef.current = now
-        isAnimatingRef.current = true
-        
-        setTimeout(() => {
-          setIsVisible(false)
-          setTimeout(() => {
-            isAnimatingRef.current = false
-          }, 500)
-        }, 5000)
-      } else if (distance >= threshold * 1.5) {
-        if (isAnimatingRef.current) {
-          setIsVisible(false)
-          isAnimatingRef.current = false
-        }
+      if (distance < threshold) {
+        const normalizedDistance = distance / threshold
+        newOpacity = Math.max(0, 1 - normalizedDistance)
+        newOpacity = Math.pow(newOpacity, 2)
       }
+      
+      setOpacity(newOpacity)
     }
 
-    const interval = setInterval(checkPosition, 100)
+    const interval = setInterval(checkPosition, 50)
     return () => clearInterval(interval)
   }, [containerRef])
 
@@ -113,7 +99,10 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
         onError={(e) => handleImageError(e, image.src)}
       />
       {image.caption && (
-        <div className={`image-caption ${isVisible ? 'visible' : ''}`}>
+        <div 
+          className="image-caption"
+          style={{ opacity }}
+        >
           {image.caption}
         </div>
       )}
