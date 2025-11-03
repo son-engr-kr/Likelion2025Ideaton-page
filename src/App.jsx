@@ -128,14 +128,14 @@ function App() {
       <Route path="/" element={
         <div className="landing-page">
           <header className="header">
-            <h1 className="main-title">2025 아이디어톤</h1>
-            <p className="subtitle">혁신적인 아이디어를 현실로 만드는 여정</p>
+            <h1 className="main-title">이름 정해야 하는데</h1>
+            <p className="subtitle">서브타이틀도 정해야 하는데데</p>
           </header>
 
           <section className="intro-section">
             <p className="intro-text">
-              사용자 중심의 디자인과 직관적인 인터페이스로<br />
-              뛰어난 사용자 경험을 제공합니다.
+              여기에다가는 뭘 적을까요<br />
+              뭔가 적기는 해야하는데..
             </p>
           </section>
 
