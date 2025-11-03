@@ -5,7 +5,9 @@ const encodeImagePath = (path) => {
   const parts = path.split('/')
   const dir = parts.slice(0, -1).join('/')
   const fileName = parts[parts.length - 1]
-  return dir + '/' + encodeURIComponent(fileName)
+  const baseUrl = import.meta.env.BASE_URL
+  const cleanDir = dir.startsWith('/') ? dir.slice(1) : dir
+  return baseUrl + cleanDir + '/' + encodeURIComponent(fileName)
 }
 
 const UI_SERIES = [
