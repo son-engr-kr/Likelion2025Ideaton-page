@@ -63,7 +63,8 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
       const itemCenter = itemRect.left + itemRect.width / 2
       
       const distance = Math.abs(containerCenter - itemCenter)
-      const threshold = containerRect.width * 0.3
+      const isMobile = window.innerWidth <= 768
+      const threshold = isMobile ? containerRect.width * 0.5 : containerRect.width * 0.3
       
       const now = Date.now()
       const timeSinceLastShow = now - lastShownTimeRef.current
