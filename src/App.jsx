@@ -17,12 +17,30 @@ const UI_SERIES = [
     title: '온보딩',
     description: '서비스를 시작하기 위한 초기 설정을 해주세요.',
     images: [
-      { src: encodeImagePath('/images/ui_images/Onboarding.png'), caption: '온보딩 시작 화면' },
-      { src: encodeImagePath('/images/ui_images/Onboarding2.png'), caption: '서비스 소개' },
-      { src: encodeImagePath('/images/ui_images/Onboarding3.png'), caption: '주요 기능 안내' },
-      { src: encodeImagePath('/images/ui_images/Onboarding4.png'), caption: '사용자 가이드' },
-      { src: encodeImagePath('/images/ui_images/Onboarding5.png'), caption: '설정 완료' },
-      { src: encodeImagePath('/images/ui_images/Onboarding6.png'), caption: '환영 화면' }
+      { 
+        src: encodeImagePath('/images/ui_images/Onboarding.png'), 
+        fixedCaption: '온보딩 1단계'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/Onboarding2.png'), 
+        fixedCaption: '온보딩 2단계'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/Onboarding3.png'), 
+        fixedCaption: '온보딩 3단계'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/Onboarding4.png'), 
+        fixedCaption: '온보딩 4단계'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/Onboarding5.png'), 
+        fixedCaption: '온보딩 5단계'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/Onboarding6.png'), 
+        fixedCaption: '온보딩 완료'
+      }
     ]
   },
   {
@@ -30,59 +48,39 @@ const UI_SERIES = [
     title: 'AI 중재자',
     description: 'AI agent를 이용한 집안일 분배, 일정 조율, 중재를 제공합니다.',
     images: [
-      { src: encodeImagePath('/images/ui_images/AI Chat Interface - v2.png'), caption: 'AI 채팅 메인 화면' },
-      { src: encodeImagePath('/images/ui_images/AI Chat Interface1.png'), caption: '대화 시작' },
-      { src: encodeImagePath('/images/ui_images/AI Chat Interface2.png'), caption: '집안일 분배 중' },
-      { src: encodeImagePath('/images/ui_images/AI Chat Interface3.png'), caption: '일정 조율 화면' },
-      { src: encodeImagePath('/images/ui_images/AI Chat Interface4-1.png'), caption: '중재 진행 중' },
-      { src: encodeImagePath('/images/ui_images/AI Chat Interface4.png'), caption: '결과 확인' },
-      { src: encodeImagePath('/images/ui_images/AI Chat Interface5.png'), caption: '완료된 작업' }
+      { 
+        src: encodeImagePath('/images/ui_images/AI Chat Interface - v2.png'), 
+        fixedCaption: 'AI 채팅 메인'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/AI Chat Interface1.png'), 
+        fixedCaption: '대화 시작'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/AI Chat Interface2.png'), 
+        fixedCaption: '집안일 분배'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/AI Chat Interface3.png'), 
+        fixedCaption: '일정 조율'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/AI Chat Interface4-1.png'), 
+        fixedCaption: '중재 진행'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/AI Chat Interface4.png'), 
+        fixedCaption: '결과 확인'
+      },
+      { 
+        src: encodeImagePath('/images/ui_images/AI Chat Interface5.png'), 
+        fixedCaption: '완료'
+      }
     ]
   }
 ]
 
-function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
-  const itemRef = useRef(null)
-  const [opacity, setOpacity] = useState(0)
-
-  useEffect(() => {
-    if (!containerRef || !itemRef.current) {
-      return
-    }
-
-    const checkPosition = () => {
-      if (!containerRef || !itemRef.current) return
-
-      const container = containerRef
-      const item = itemRef.current
-      
-      const containerRect = container.getBoundingClientRect()
-      const itemRect = item.getBoundingClientRect()
-      
-      if (containerRect.width === 0) return
-      
-      const containerCenterX = containerRect.left + containerRect.width / 2
-      const itemCenterX = itemRect.left + itemRect.width / 2
-      
-      const distance = Math.abs(containerCenterX - itemCenterX)
-      const threshold = containerRect.width * 0.8
-      
-      let newOpacity = 0
-      
-      if (distance < threshold) {
-        const normalizedDistance = distance / threshold
-        newOpacity = Math.max(0, 1 - normalizedDistance)
-        newOpacity = Math.pow(newOpacity, 1.1)
-      }
-      
-      setOpacity(newOpacity)
-    }
-
-    checkPosition()
-    const interval = setInterval(checkPosition, 50)
-    return () => clearInterval(interval)
-  }, [containerRef])
-
+function ImageItem({ image, seriesTitle, imgIndex }) {
   const handleImageError = (e, originalSrc) => {
     console.error('Image failed to load:', originalSrc);
     const encodedSrc = originalSrc.replace(/ /g, '%20');
@@ -97,24 +95,16 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
   };
 
   return (
-    <div ref={itemRef} className="series-image-item">
+    <div className="series-image-item">
       <img 
         src={image.src} 
         alt={`${seriesTitle} ${imgIndex + 1}`}
         onError={(e) => handleImageError(e, image.src)}
       />
-      {image.caption && (
-        <>
-          <div className="image-caption-fixed">
-            {image.caption}
-          </div>
-          <div 
-            className="image-caption"
-            style={{ opacity }}
-          >
-            {image.caption}
-          </div>
-        </>
+      {image.fixedCaption && (
+        <div className="image-caption-fixed">
+          {image.fixedCaption}
+        </div>
       )}
     </div>
   )
@@ -370,7 +360,6 @@ function App() {
                         image={img}
                         seriesTitle={series.title}
                         imgIndex={imgIndex}
-                        containerRef={containerRefs.current[series.id]}
                       />
                     ))}
                     {/* Duplicate first image for seamless loop */}
@@ -379,7 +368,6 @@ function App() {
                       image={series.images[0]}
                       seriesTitle={series.title}
                       imgIndex={0}
-                      containerRef={containerRefs.current[series.id]}
                     />
                   </div>
                 </div>
