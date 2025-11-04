@@ -104,12 +104,17 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
         onError={(e) => handleImageError(e, image.src)}
       />
       {image.caption && (
-        <div 
-          className="image-caption"
-          style={{ opacity }}
-        >
-          {image.caption}
-        </div>
+        <>
+          <div className="image-caption-fixed">
+            {image.caption}
+          </div>
+          <div 
+            className="image-caption"
+            style={{ opacity }}
+          >
+            {image.caption}
+          </div>
+        </>
       )}
     </div>
   )
@@ -117,6 +122,213 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
 
 function App() {
   const containerRefs = useRef({})
+  const trackRefs = useRef({})
+
+  // Generate dynamic keyframes for each series
+  useEffect(() => {
+    const initAnimations = () => {
+      UI_SERIES.forEach((series) => {
+        const imageCount = series.images.length
+        if (imageCount <= 1) return
+
+        const trackElement = trackRefs.current[series.id]
+        const containerElement = containerRefs.current[series.id]
+        
+        if (!trackElement || !containerElement) {
+          return
+        }
+
+        // Check if images are loaded
+        const imageItems = trackElement.querySelectorAll('.series-image-item img')
+        const allLoaded = Array.from(imageItems).every(img => img.complete && img.naturalHeight !== 0)
+        
+        if (!allLoaded && imageItems.length > 0) {
+          // Wait for images to load
+          const loadPromises = Array.from(imageItems).map(img => {
+            if (img.complete) return Promise.resolve()
+            return new Promise(resolve => {
+              img.addEventListener('load', resolve, { once: true })
+              img.addEventListener('error', resolve, { once: true })
+            })
+          })
+          
+          Promise.all(loadPromises).then(() => {
+            setTimeout(() => {
+              createAnimationForSeries(series, trackElement, containerElement)
+            }, 100)
+          })
+        } else {
+          setTimeout(() => {
+            createAnimationForSeries(series, trackElement, containerElement)
+          }, 100)
+        }
+      })
+    }
+
+    // Initial call
+    initAnimations()
+
+    // Recreate animations on window resize
+    let resizeTimeout
+    const handleResize = () => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        initAnimations()
+      }, 250)
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(resizeTimeout)
+    }
+  }, [])
+
+  const createAnimationForSeries = (series, trackElement, containerElement) => {
+    const imageCount = series.images.length
+    const allImageItems = Array.from(trackElement.querySelectorAll('.series-image-item'))
+    const originalImageItems = allImageItems.slice(0, imageCount)
+
+    if (originalImageItems.length === 0) return
+
+    const animationName = `scroll-horizontal-${series.id}`
+    const styleId = `keyframes-${series.id}`
+    
+    // Remove existing style if any
+    const existingStyle = document.getElementById(styleId)
+    if (existingStyle) {
+      existingStyle.remove()
+    }
+
+    // Reset height before recalculating to avoid stale values
+    containerElement.style.height = 'auto'
+
+    // Measure actual positions relative to container width
+    const positions = []
+    let containerWidth = containerElement.getBoundingClientRect().width
+
+    console.log(`Container initial width: ${containerWidth}`)
+
+    // Calculate container height based on image aspect ratio
+    const firstImage = originalImageItems[0].querySelector('img')
+    if (firstImage && firstImage.naturalWidth > 0 && firstImage.naturalHeight > 0) {
+      const imageAspectRatio = firstImage.naturalHeight / firstImage.naturalWidth
+      const calculatedHeight = containerWidth * imageAspectRatio
+      
+      // Set container height to match image aspect ratio
+      containerElement.style.height = `${calculatedHeight}px`
+      
+      // Re-measure container width after height adjustment (in case of layout shifts)
+      containerWidth = containerElement.getBoundingClientRect().width
+      console.log(`Container after height set: ${containerWidth}`)
+    }
+    
+    // Set container width as CSS variable for relative calculations
+    containerElement.style.setProperty('--container-width', `${containerWidth}px`)
+
+    // Calculate positions for all images including duplicate
+    // We want to translate the track so each image appears centered
+    // When image i is centered: track.translateX = (containerWidth/2) - (item[i].left + item[i].width/2)
+    allImageItems.forEach((item, index) => {
+      const itemRect = item.getBoundingClientRect()
+      const containerRect = containerElement.getBoundingClientRect()
+      
+      // Calculate item position relative to container
+      const itemLeft = item.offsetLeft
+      const itemWidth = itemRect.width
+      
+      // To center this item in the container:
+      // itemCenter should be at containerCenter
+      // itemCenter (in track coords) = itemLeft + itemWidth/2
+      // After translateX: itemCenter + translateX = containerCenter
+      // Therefore: translateX = containerCenter - itemCenter
+      const itemCenter = itemLeft + itemWidth / 2
+      const containerCenter = containerWidth / 2
+      const translateX = containerCenter - itemCenter
+      
+      // Store as pixels (we'll use CSS calc with var(--container-width))
+      positions.push({
+        translateX: translateX,
+        index,
+        itemLeft,
+        itemWidth,
+        itemCenter,
+        containerCenter,
+        containerWidth
+      })
+    })
+
+    // Debug: log positions
+    console.log(`Series ${series.id}: containerWidth=${containerWidth}, imageCount=${imageCount}`)
+    console.log(`Positions:`, positions.map(p => ({
+      index: p.index,
+      left: p.itemLeft,
+      width: p.itemWidth,
+      itemCenter: p.itemCenter.toFixed(0),
+      containerCenter: p.containerCenter.toFixed(0),
+      translateX: p.translateX.toFixed(0)
+    })))
+
+    if (positions.length < imageCount + 1) {
+      console.warn(`Not enough positions: ${positions.length} < ${imageCount + 1}`)
+      return
+    }
+
+    // Calculate keyframe percentages - each image gets equal time
+    const percentPerImage = 100 / imageCount
+    const holdTime = 0.7 // 70% hold
+    const transitionTime = 0.3 // 30% transition
+
+    const keyframes = []
+    const transformFor = (pos) => `translateX(${pos.translateX}px)`
+
+    // Start at first image
+    keyframes.push(`0% { transform: ${transformFor(positions[0])}; }`)
+
+    // Create keyframes for each image transition
+    for (let i = 0; i < imageCount; i++) {
+      const currentImagePos = positions[i]
+      const nextImageIndex = i === imageCount - 1 ? imageCount : i + 1 // Last one uses duplicate
+      const nextImagePos = positions[nextImageIndex]
+      
+      // Calculate timing for this image's cycle
+      const cycleStartPercent = i * percentPerImage
+      const holdEndPercent = cycleStartPercent + (percentPerImage * holdTime)
+      const transitionEndPercent = (i + 1) * percentPerImage
+      
+      // Hold on current image
+      if (i > 0) {
+        // For images after first, add keyframe at cycle start (should match previous cycle end)
+        keyframes.push(`${cycleStartPercent.toFixed(2)}% { transform: ${transformFor(currentImagePos)}; }`)
+      }
+      
+      // Hold until it's time to transition
+      keyframes.push(`${holdEndPercent.toFixed(2)}% { transform: ${transformFor(currentImagePos)}; }`)
+      
+      // Transition to next image
+      keyframes.push(`${transitionEndPercent.toFixed(2)}% { transform: ${transformFor(nextImagePos)}; }`)
+    }
+    
+    // Create style element
+    const style = document.createElement('style')
+    style.id = styleId
+    style.textContent = `
+      @keyframes ${animationName} {
+        ${keyframes.join('\n        ')}
+      }
+      .series-images-track-${series.id} {
+        animation: ${animationName} ${imageCount * 4}s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+    `
+    document.head.appendChild(style)
+
+    // Restart animation to apply updated keyframes
+    const animatedClass = `series-images-track-${series.id}`
+    trackElement.classList.remove(animatedClass)
+    // Force reflow so the removal takes effect
+    void trackElement.offsetWidth
+    trackElement.classList.add(animatedClass)
+  }
 
   return (
     <Routes>
@@ -148,7 +360,10 @@ function App() {
                   ref={(el) => containerRefs.current[series.id] = el}
                   className="series-images-container"
                 >
-                  <div className="series-images-track">
+                  <div 
+                    ref={(el) => trackRefs.current[series.id] = el}
+                    className={`series-images-track series-images-track-${series.id}`}
+                  >
                     {series.images.map((img, imgIndex) => (
                       <ImageItem
                         key={imgIndex}
@@ -158,15 +373,14 @@ function App() {
                         containerRef={containerRefs.current[series.id]}
                       />
                     ))}
-                    {series.images.map((img, imgIndex) => (
-                      <ImageItem
-                        key={`duplicate-${imgIndex}`}
-                        image={img}
-                        seriesTitle={series.title}
-                        imgIndex={imgIndex}
-                        containerRef={containerRefs.current[series.id]}
-                      />
-                    ))}
+                    {/* Duplicate first image for seamless loop */}
+                    <ImageItem
+                      key="loop-duplicate"
+                      image={series.images[0]}
+                      seriesTitle={series.title}
+                      imgIndex={0}
+                      containerRef={containerRefs.current[series.id]}
+                    />
                   </div>
                 </div>
               </div>

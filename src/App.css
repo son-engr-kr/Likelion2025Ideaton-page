@@ -89,12 +89,15 @@
 }
 
 .series-images-container {
-  flex: 1;
+  flex: 1 1 600px;
   overflow: hidden;
   position: relative;
-  height: 500px;
+  min-height: 300px;
   background: #fafafa;
   border-radius: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .series-images-track {
@@ -103,7 +106,6 @@
   height: 100%;
   width: fit-content;
   align-items: center;
-  animation: scroll-horizontal 20s linear infinite;
   will-change: transform;
 }
 
@@ -145,6 +147,25 @@
   overflow: hidden;
 }
 
+.image-caption-fixed {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .image-caption {
   position: absolute;
   top: 50%;
@@ -170,14 +191,7 @@
   display: none;
 }
 
-@keyframes scroll-horizontal {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
+/* Keyframes are now dynamically generated in App.jsx */
 
 .footer {
   padding: 60px 20px;
@@ -208,7 +222,12 @@
 
   .series-images-container {
     width: 100%;
-    height: 300px;
+    max-width: 100%;
+    min-height: 260px;
+  }
+
+  .series-images-track {
+    gap: 12px;
   }
 
   .series-image-item {
@@ -216,7 +235,7 @@
   }
 
   .series-image-item img {
-    max-height: 300px;
+    max-height: 100%;
   }
 }
 
@@ -250,7 +269,12 @@
   }
 
   .series-images-container {
-    height: 250px;
+    max-width: 100%;
+    min-height: 220px;
+  }
+
+  .series-images-track {
+    gap: 8px;
   }
 
   .series-image-item {
@@ -258,6 +282,6 @@
   }
 
   .series-image-item img {
-    max-height: 250px;
+    max-height: 100%;
   }
 }
