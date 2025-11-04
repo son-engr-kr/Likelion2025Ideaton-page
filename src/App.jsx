@@ -46,7 +46,9 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
   const [opacity, setOpacity] = useState(0)
 
   useEffect(() => {
-    if (!containerRef || !itemRef.current) return
+    if (!containerRef || !itemRef.current) {
+      return
+    }
 
     const checkPosition = () => {
       if (!containerRef || !itemRef.current) return
@@ -57,23 +59,26 @@ function ImageItem({ image, seriesTitle, imgIndex, containerRef }) {
       const containerRect = container.getBoundingClientRect()
       const itemRect = item.getBoundingClientRect()
       
+      if (containerRect.width === 0) return
+      
       const containerCenterX = containerRect.left + containerRect.width / 2
       const itemCenterX = itemRect.left + itemRect.width / 2
       
       const distance = Math.abs(containerCenterX - itemCenterX)
-      const threshold = containerRect.width * 0.5
+      const threshold = containerRect.width * 0.8
       
       let newOpacity = 0
       
       if (distance < threshold) {
         const normalizedDistance = distance / threshold
         newOpacity = Math.max(0, 1 - normalizedDistance)
-        newOpacity = Math.pow(newOpacity, 2)
+        newOpacity = Math.pow(newOpacity, 1.1)
       }
       
       setOpacity(newOpacity)
     }
 
+    checkPosition()
     const interval = setInterval(checkPosition, 50)
     return () => clearInterval(interval)
   }, [containerRef])
