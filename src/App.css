@@ -113,6 +113,7 @@
 
 .series-images-track:has(.series-image-item:only-child) {
   justify-content: center;
+  width: 100%;
 }
 
 .series-image-item {

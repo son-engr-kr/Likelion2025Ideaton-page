@@ -260,7 +260,12 @@ function App() {
       if (!trackElement || !containerElement) return
 
       const imageCount = series.images.length
-      if (imageCount <= 1) return
+
+      // For single image, reset transform and let CSS center it
+      if (imageCount <= 1) {
+        trackElement.style.transform = 'none'
+        return
+      }
 
       const currentIndex = currentImageIndex[series.id] || 0
 
