@@ -158,57 +158,170 @@ function ImageItem({ image, seriesTitle, imgIndex }) {
 function App() {
   const containerRefs = useRef({})
   const trackRefs = useRef({})
+  const sectionRefs = useRef({})
+  const [currentImageIndex, setCurrentImageIndex] = useState({})
+  const scrollProgressRef = useRef({})
+  const isScrollingThroughImages = useRef({})
 
-  // Generate dynamic keyframes for each series
+  // Initialize scroll progress for each series
   useEffect(() => {
-    const initAnimations = () => {
-      UI_SERIES.forEach((series) => {
-        const imageCount = series.images.length
-        if (imageCount <= 1) return
+    UI_SERIES.forEach((series) => {
+      if (!scrollProgressRef.current[series.id]) {
+        scrollProgressRef.current[series.id] = 0
+      }
+      if (!isScrollingThroughImages.current[series.id]) {
+        isScrollingThroughImages.current[series.id] = false
+      }
+      setCurrentImageIndex(prev => ({
+        ...prev,
+        [series.id]: 0
+      }))
+    })
+  }, [])
 
-        const trackElement = trackRefs.current[series.id]
+  // Handle scroll-based image navigation
+  useEffect(() => {
+    const handleWheel = (e) => {
+      // Find which section we're currently viewing
+      let targetSection = null
+      let targetSeriesId = null
+
+      for (const series of UI_SERIES) {
+        const section = sectionRefs.current[series.id]
+        if (!section) continue
+
+        const rect = section.getBoundingClientRect()
+        const viewportMiddle = window.innerHeight / 2
+
+        // Check if section is in the middle of viewport
+        if (rect.top < viewportMiddle && rect.bottom > viewportMiddle) {
+          targetSection = section
+          targetSeriesId = series.id
+          break
+        }
+      }
+
+      if (!targetSection || !targetSeriesId) return
+
+      const series = UI_SERIES.find(s => s.id === targetSeriesId)
+      if (!series || series.images.length <= 1) return
+
+      const imageCount = series.images.length
+      const currentIndex = currentImageIndex[targetSeriesId] || 0
+
+      // Check if we're at the boundaries
+      const isAtStart = currentIndex === 0 && e.deltaY < 0
+      const isAtEnd = currentIndex === imageCount - 1 && e.deltaY > 0
+
+      // If at boundaries, allow normal scroll
+      if (isAtStart || isAtEnd) {
+        isScrollingThroughImages.current[targetSeriesId] = false
+        return
+      }
+
+      // We're in the middle of images, prevent scroll and change image
+      e.preventDefault()
+      isScrollingThroughImages.current[targetSeriesId] = true
+
+      const scrollDelta = e.deltaY
+      const scrollThreshold = 100 // Pixels needed to change image
+
+      // Update scroll progress
+      scrollProgressRef.current[targetSeriesId] =
+        (scrollProgressRef.current[targetSeriesId] || 0) + scrollDelta
+
+      // Check if we should change image
+      if (Math.abs(scrollProgressRef.current[targetSeriesId]) >= scrollThreshold) {
+        const direction = scrollProgressRef.current[targetSeriesId] > 0 ? 1 : -1
+        const newIndex = Math.max(0, Math.min(imageCount - 1, currentIndex + direction))
+
+        setCurrentImageIndex(prev => ({
+          ...prev,
+          [targetSeriesId]: newIndex
+        }))
+
+        // Reset scroll progress
+        scrollProgressRef.current[targetSeriesId] = 0
+      }
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => {
+      window.removeEventListener('wheel', handleWheel)
+    }
+  }, [currentImageIndex])
+
+  // Update image positions based on current index
+  useEffect(() => {
+    UI_SERIES.forEach((series) => {
+      const trackElement = trackRefs.current[series.id]
+      const containerElement = containerRefs.current[series.id]
+
+      if (!trackElement || !containerElement) return
+
+      const imageCount = series.images.length
+      if (imageCount <= 1) return
+
+      const currentIndex = currentImageIndex[series.id] || 0
+
+      // Calculate position
+      const allImageItems = Array.from(trackElement.querySelectorAll('.series-image-item'))
+      const targetItem = allImageItems[currentIndex]
+
+      if (!targetItem) return
+
+      const containerWidth = containerElement.getBoundingClientRect().width
+      const itemLeft = targetItem.offsetLeft
+      const itemWidth = targetItem.getBoundingClientRect().width
+
+      const itemCenter = itemLeft + itemWidth / 2
+      const containerCenter = containerWidth / 2
+      const translateX = containerCenter - itemCenter
+
+      trackElement.style.transform = `translateX(${translateX}px)`
+      trackElement.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+    })
+  }, [currentImageIndex])
+
+  // Set container heights based on image aspect ratios
+  useEffect(() => {
+    const initContainers = () => {
+      UI_SERIES.forEach((series) => {
         const containerElement = containerRefs.current[series.id]
-        
-        if (!trackElement || !containerElement) {
-          return
+        const trackElement = trackRefs.current[series.id]
+
+        if (!containerElement || !trackElement) return
+
+        const firstImageItem = trackElement.querySelector('.series-image-item img')
+        if (!firstImageItem) return
+
+        const setupHeight = () => {
+          if (firstImageItem.naturalWidth > 0 && firstImageItem.naturalHeight > 0) {
+            const containerWidth = containerElement.getBoundingClientRect().width
+            const imageAspectRatio = firstImageItem.naturalHeight / firstImageItem.naturalWidth
+            const calculatedHeight = containerWidth * imageAspectRatio
+            const maxHeight = window.innerHeight * 0.8
+
+            const finalHeight = Math.min(calculatedHeight, maxHeight)
+            containerElement.style.height = `${finalHeight}px`
+          }
         }
 
-        // Check if images are loaded
-        const imageItems = trackElement.querySelectorAll('.series-image-item img')
-        const allLoaded = Array.from(imageItems).every(img => img.complete && img.naturalHeight !== 0)
-        
-        if (!allLoaded && imageItems.length > 0) {
-          // Wait for images to load
-          const loadPromises = Array.from(imageItems).map(img => {
-            if (img.complete) return Promise.resolve()
-            return new Promise(resolve => {
-              img.addEventListener('load', resolve, { once: true })
-              img.addEventListener('error', resolve, { once: true })
-            })
-          })
-          
-          Promise.all(loadPromises).then(() => {
-            setTimeout(() => {
-              createAnimationForSeries(series, trackElement, containerElement)
-            }, 100)
-          })
+        if (firstImageItem.complete) {
+          setupHeight()
         } else {
-          setTimeout(() => {
-            createAnimationForSeries(series, trackElement, containerElement)
-          }, 100)
+          firstImageItem.addEventListener('load', setupHeight, { once: true })
         }
       })
     }
 
-    // Initial call
-    initAnimations()
+    initContainers()
 
-    // Recreate animations on window resize
     let resizeTimeout
     const handleResize = () => {
       clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
-        initAnimations()
+        initContainers()
       }, 250)
     }
 
@@ -219,151 +332,6 @@ function App() {
     }
   }, [])
 
-  const createAnimationForSeries = (series, trackElement, containerElement) => {
-    const imageCount = series.images.length
-    const allImageItems = Array.from(trackElement.querySelectorAll('.series-image-item'))
-    const originalImageItems = allImageItems.slice(0, imageCount)
-
-    if (originalImageItems.length === 0) return
-
-    const animationName = `scroll-horizontal-${series.id}`
-    const styleId = `keyframes-${series.id}`
-    
-    // Remove existing style if any
-    const existingStyle = document.getElementById(styleId)
-    if (existingStyle) {
-      existingStyle.remove()
-    }
-
-    // Reset height before recalculating to avoid stale values
-    containerElement.style.height = 'auto'
-
-    // Measure actual positions relative to container width
-    const positions = []
-    let containerWidth = containerElement.getBoundingClientRect().width
-
-    console.log(`Container initial width: ${containerWidth}`)
-
-    // Calculate container height based on image aspect ratio
-    const firstImage = originalImageItems[0].querySelector('img')
-    if (firstImage && firstImage.naturalWidth > 0 && firstImage.naturalHeight > 0) {
-      const imageAspectRatio = firstImage.naturalHeight / firstImage.naturalWidth
-      const calculatedHeight = containerWidth * imageAspectRatio
-      
-      // Set container height to match image aspect ratio
-      containerElement.style.height = `${calculatedHeight}px`
-      
-      // Re-measure container width after height adjustment (in case of layout shifts)
-      containerWidth = containerElement.getBoundingClientRect().width
-      console.log(`Container after height set: ${containerWidth}`)
-    }
-    
-    // Set container width as CSS variable for relative calculations
-    containerElement.style.setProperty('--container-width', `${containerWidth}px`)
-
-    // Calculate positions for all images including duplicate
-    // We want to translate the track so each image appears centered
-    // When image i is centered: track.translateX = (containerWidth/2) - (item[i].left + item[i].width/2)
-    allImageItems.forEach((item, index) => {
-      const itemRect = item.getBoundingClientRect()
-      const containerRect = containerElement.getBoundingClientRect()
-      
-      // Calculate item position relative to container
-      const itemLeft = item.offsetLeft
-      const itemWidth = itemRect.width
-      
-      // To center this item in the container:
-      // itemCenter should be at containerCenter
-      // itemCenter (in track coords) = itemLeft + itemWidth/2
-      // After translateX: itemCenter + translateX = containerCenter
-      // Therefore: translateX = containerCenter - itemCenter
-      const itemCenter = itemLeft + itemWidth / 2
-      const containerCenter = containerWidth / 2
-      const translateX = containerCenter - itemCenter
-      
-      // Store as pixels (we'll use CSS calc with var(--container-width))
-      positions.push({
-        translateX: translateX,
-        index,
-        itemLeft,
-        itemWidth,
-        itemCenter,
-        containerCenter,
-        containerWidth
-      })
-    })
-
-    // Debug: log positions
-    console.log(`Series ${series.id}: containerWidth=${containerWidth}, imageCount=${imageCount}`)
-    console.log(`Positions:`, positions.map(p => ({
-      index: p.index,
-      left: p.itemLeft,
-      width: p.itemWidth,
-      itemCenter: p.itemCenter.toFixed(0),
-      containerCenter: p.containerCenter.toFixed(0),
-      translateX: p.translateX.toFixed(0)
-    })))
-
-    if (positions.length < imageCount + 1) {
-      console.warn(`Not enough positions: ${positions.length} < ${imageCount + 1}`)
-      return
-    }
-
-    // Calculate keyframe percentages - each image gets equal time
-    const percentPerImage = 100 / imageCount
-    const holdTime = 0.7 // 70% hold
-    const transitionTime = 0.3 // 30% transition
-
-    const keyframes = []
-    const transformFor = (pos) => `translateX(${pos.translateX}px)`
-
-    // Start at first image
-    keyframes.push(`0% { transform: ${transformFor(positions[0])}; }`)
-
-    // Create keyframes for each image transition
-    for (let i = 0; i < imageCount; i++) {
-      const currentImagePos = positions[i]
-      const nextImageIndex = i === imageCount - 1 ? imageCount : i + 1 // Last one uses duplicate
-      const nextImagePos = positions[nextImageIndex]
-      
-      // Calculate timing for this image's cycle
-      const cycleStartPercent = i * percentPerImage
-      const holdEndPercent = cycleStartPercent + (percentPerImage * holdTime)
-      const transitionEndPercent = (i + 1) * percentPerImage
-      
-      // Hold on current image
-      if (i > 0) {
-        // For images after first, add keyframe at cycle start (should match previous cycle end)
-        keyframes.push(`${cycleStartPercent.toFixed(2)}% { transform: ${transformFor(currentImagePos)}; }`)
-      }
-      
-      // Hold until it's time to transition
-      keyframes.push(`${holdEndPercent.toFixed(2)}% { transform: ${transformFor(currentImagePos)}; }`)
-      
-      // Transition to next image
-      keyframes.push(`${transitionEndPercent.toFixed(2)}% { transform: ${transformFor(nextImagePos)}; }`)
-    }
-    
-    // Create style element
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = `
-      @keyframes ${animationName} {
-        ${keyframes.join('\n        ')}
-      }
-      .series-images-track-${series.id} {
-        animation: ${animationName} ${imageCount * 4}s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-      }
-    `
-    document.head.appendChild(style)
-
-    // Restart animation to apply updated keyframes
-    const animatedClass = `series-images-track-${series.id}`
-    trackElement.classList.remove(animatedClass)
-    // Force reflow so the removal takes effect
-    void trackElement.offsetWidth
-    trackElement.classList.add(animatedClass)
-  }
 
   return (
     <Routes>
@@ -383,21 +351,22 @@ function App() {
 
           <section className="ui-sections">
             {UI_SERIES.map((series, index) => (
-              <div 
-                key={series.id} 
+              <div
+                key={series.id}
+                ref={(el) => sectionRefs.current[series.id] = el}
                 className={`ui-series-section ${index % 2 === 0 ? 'left-content' : 'right-content'}`}
               >
                 <div className="series-content">
                   <h2 className="series-title">{series.title}</h2>
                   <p className="series-description">{series.description}</p>
                 </div>
-                <div 
+                <div
                   ref={(el) => containerRefs.current[series.id] = el}
                   className="series-images-container"
                 >
-                  <div 
+                  <div
                     ref={(el) => trackRefs.current[series.id] = el}
-                    className={`series-images-track series-images-track-${series.id}`}
+                    className="series-images-track"
                   >
                     {series.images.map((img, imgIndex) => (
                       <ImageItem
@@ -407,13 +376,6 @@ function App() {
                         imgIndex={imgIndex}
                       />
                     ))}
-                    {/* Duplicate first image for seamless loop */}
-                    <ImageItem
-                      key="loop-duplicate"
-                      image={series.images[0]}
-                      seriesTitle={series.title}
-                      imgIndex={0}
-                    />
                   </div>
                 </div>
               </div>

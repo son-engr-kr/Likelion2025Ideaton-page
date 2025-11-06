@@ -93,6 +93,7 @@
   overflow: hidden;
   position: relative;
   min-height: 300px;
+  max-height: 80vh;
   background: #fafafa;
   border-radius: 16px;
   width: 100%;
@@ -107,15 +108,10 @@
   width: fit-content;
   align-items: center;
   will-change: transform;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.series-images-track:hover {
-  animation-play-state: paused;
-}
-
-.series-images-track:has(.series-image-item:only-child),
-.series-images-track:has(.series-image-item:nth-child(2):last-child) {
-  animation: none;
+.series-images-track:has(.series-image-item:only-child) {
   justify-content: center;
 }
 
@@ -173,8 +169,6 @@
 .series-image-item img[src=""] {
   display: none;
 }
-
-/* Keyframes are now dynamically generated in App.jsx */
 
 .footer {
   padding: 60px 20px;
