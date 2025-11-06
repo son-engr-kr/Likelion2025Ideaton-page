@@ -185,26 +185,38 @@ function App() {
   // Handle scroll-based image navigation
   useEffect(() => {
     const handleWheel = (e) => {
-      // Find which section we're currently viewing
-      let targetSection = null
+      // Find which image container is currently in view
       let targetSeriesId = null
 
       for (const series of UI_SERIES) {
-        const section = sectionRefs.current[series.id]
-        if (!section) continue
+        const container = containerRefs.current[series.id]
+        if (!container) continue
 
-        const rect = section.getBoundingClientRect()
-        const viewportMiddle = window.innerHeight / 2
+        const rect = container.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
 
-        // Check if section is in the middle of viewport
-        if (rect.top < viewportMiddle && rect.bottom > viewportMiddle) {
-          targetSection = section
+        // Check if container is mostly visible on screen
+        const visibleTop = Math.max(0, rect.top)
+        const visibleBottom = Math.min(viewportHeight, rect.bottom)
+        const visibleHeight = visibleBottom - visibleTop
+        const containerHeight = rect.height
+        const visiblePercentage = visibleHeight / containerHeight
+
+        // Calculate container center position relative to viewport center
+        const viewportCenter = viewportHeight / 2
+        const containerCenter = rect.top + rect.height / 2
+        const distanceFromCenter = Math.abs(containerCenter - viewportCenter)
+
+        // Only activate if:
+        // 1. Container is at least 85% visible
+        // 2. Container center is within 150px of viewport center
+        if (visiblePercentage >= 0.85 && distanceFromCenter <= 150) {
           targetSeriesId = series.id
           break
         }
       }
 
-      if (!targetSection || !targetSeriesId) return
+      if (!targetSeriesId) return
 
       const series = UI_SERIES.find(s => s.id === targetSeriesId)
       if (!series || series.images.length <= 1) return
@@ -258,14 +270,29 @@ function App() {
   useEffect(() => {
     const findActiveSection = () => {
       for (const series of UI_SERIES) {
-        const section = sectionRefs.current[series.id]
-        if (!section) continue
+        const container = containerRefs.current[series.id]
+        if (!container) continue
 
-        const rect = section.getBoundingClientRect()
-        const viewportMiddle = window.innerHeight / 2
+        const rect = container.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
 
-        if (rect.top < viewportMiddle && rect.bottom > viewportMiddle) {
-          return { section, seriesId: series.id }
+        // Check if container is mostly visible on screen
+        const visibleTop = Math.max(0, rect.top)
+        const visibleBottom = Math.min(viewportHeight, rect.bottom)
+        const visibleHeight = visibleBottom - visibleTop
+        const containerHeight = rect.height
+        const visiblePercentage = visibleHeight / containerHeight
+
+        // Calculate container center position relative to viewport center
+        const viewportCenter = viewportHeight / 2
+        const containerCenter = rect.top + rect.height / 2
+        const distanceFromCenter = Math.abs(containerCenter - viewportCenter)
+
+        // Only activate if:
+        // 1. Container is at least 85% visible
+        // 2. Container center is within 150px of viewport center
+        if (visiblePercentage >= 0.85 && distanceFromCenter <= 150) {
+          return { section: sectionRefs.current[series.id], seriesId: series.id }
         }
       }
       return { section: null, seriesId: null }
