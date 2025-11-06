@@ -460,6 +460,17 @@ function App() {
             </p>
           </section>
 
+          <section className="demo-section">
+            <a
+              href="https://www.figma.com/proto/rOIwsaHrhGJVnF8B8epnqG/Likelion2025ideaton?node-id=59-5758&t=5BJcwwNiMJae0aoO-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=59%3A5758"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="demo-link-button"
+            >
+              데모 버전 체험하기
+            </a>
+          </section>
+
           <section className="ui-sections">
             {UI_SERIES.map((series, index) => (
               <div
@@ -494,6 +505,14 @@ function App() {
           </section>
 
           <footer className="footer">
+            <a
+              href="https://www.figma.com/proto/rOIwsaHrhGJVnF8B8epnqG/Likelion2025ideaton?node-id=59-5758&t=5BJcwwNiMJae0aoO-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=59%3A5758"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="demo-link-button"
+            >
+              데모 버전 체험하기
+            </a>
             <p>© 2025 Tean 노새. All rights reserved.</p>
           </footer>
         </div>
