@@ -513,7 +513,7 @@ function App() {
             >
               데모 버전 체험하기
             </a>
-            <p>© 2025 Tean 노새. All rights reserved.</p>
+            <p>© 2025 Team 노새. All rights reserved.</p>
           </footer>
         </div>
       } />
