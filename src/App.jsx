@@ -48,10 +48,10 @@ const UI_SERIES = [
     title: 'AI 중재자',
     description: 'AI agent를 이용한 집안일 분배, 일정 조율, 중재를 제공합니다.',
     images: [
-      { 
-        src: encodeImagePath('/images/ui_images/AI Chat Interface - v2.png'), 
-        fixedCaption: 'AI 채팅 메인'
-      },
+      // { 
+      //   src: encodeImagePath('/images/ui_images/AI Chat Interface - v2.png'), 
+      //   fixedCaption: 'AI 채팅 메인'
+      // },
       { 
         src: encodeImagePath('/images/ui_images/AI Chat Interface1.png'), 
         fixedCaption: '대화 시작'
@@ -64,10 +64,10 @@ const UI_SERIES = [
         src: encodeImagePath('/images/ui_images/AI Chat Interface3.png'), 
         fixedCaption: '일정 조율'
       },
-      { 
-        src: encodeImagePath('/images/ui_images/AI Chat Interface4-1.png'), 
-        fixedCaption: '중재 진행'
-      },
+      // { 
+      //   src: encodeImagePath('/images/ui_images/AI Chat Interface4-1.png'), 
+      //   fixedCaption: '중재 진행'
+      // },
       { 
         src: encodeImagePath('/images/ui_images/AI Chat Interface4.png'), 
         fixedCaption: '결과 확인'
@@ -89,22 +89,22 @@ const UI_SERIES = [
       },
       {
         src: encodeImagePath('/images/ui_images/Alarm2.png'),
-        fixedCaption: '알림 설정'
+        fixedCaption: '중요 정산'
       },
       {
         src: encodeImagePath('/images/ui_images/Alarm3.png'),
-        fixedCaption: '알림 목록'
+        fixedCaption: '공용 물품 정산'
       },
       {
         src: encodeImagePath('/images/ui_images/Alarm4.png'),
-        fixedCaption: '알림 확인'
+        fixedCaption: '일정 제안'
       }
     ]
   },
   {
     id: 'schedule-integration',
     title: '일정 통합',
-    description: '가족 구성원들의 일정을 한눈에 확인하고 조율할 수 있습니다.',
+    description: '룸메이트들의 일정을 한눈에 확인하고 조율할 수 있습니다.',
     images: [
       {
         src: encodeImagePath('/images/ui_images/Schedule Integration.png'),
@@ -115,7 +115,7 @@ const UI_SERIES = [
   {
     id: 'supplies-tracker',
     title: '생필품 관리',
-    description: '가정 내 생필품 재고를 추적하고 자동으로 구매 알림을 받으세요.',
+    description: '생필품 재고를 추적하고 자동으로 구매 알림을 받으세요.',
     images: [
       {
         src: encodeImagePath('/images/ui_images/Supplies Tracker.png'),
@@ -447,14 +447,16 @@ function App() {
       <Route path="/" element={
         <div className="landing-page">
           <header className="header">
-            <h1 className="main-title">이름 정해야 하는데</h1>
-            <p className="subtitle">서브타이틀도 정해야 하는데데</p>
+            <h1 className="main-title">Cohabit AI</h1>
+            <p className="subtitle">AI 매니저와 함께하는 룸메이트 생활</p>
           </header>
 
           <section className="intro-section">
             <p className="intro-text">
-              여기에다가는 뭘 적을까요<br />
-              뭔가 적기는 해야하는데..
+            "누가 청소 할 차례였지?"<br />
+            "룸메이트가 집 월세를 빨리 보내줘야 하는데.."<br /><br />
+            더 이상 고민하지 마세요.<br />
+            Cohabit AI가 공정하게 조율해드립니다.
             </p>
           </section>
 
@@ -492,7 +494,7 @@ function App() {
           </section>
 
           <footer className="footer">
-            <p>© 2025 아이디어톤. All rights reserved.</p>
+            <p>© 2025 Tean 노새. All rights reserved.</p>
           </footer>
         </div>
       } />
