@@ -162,6 +162,9 @@ function App() {
   const [currentImageIndex, setCurrentImageIndex] = useState({})
   const scrollProgressRef = useRef({})
   const isScrollingThroughImages = useRef({})
+  const touchStartY = useRef(null)
+  const touchStartScrollY = useRef(null)
+  const activeTouchSeriesId = useRef(null)
 
   // Initialize scroll progress for each series
   useEffect(() => {
@@ -248,6 +251,107 @@ function App() {
     window.addEventListener('wheel', handleWheel, { passive: false })
     return () => {
       window.removeEventListener('wheel', handleWheel)
+    }
+  }, [currentImageIndex])
+
+  // Handle touch-based image navigation for mobile
+  useEffect(() => {
+    const findActiveSection = () => {
+      for (const series of UI_SERIES) {
+        const section = sectionRefs.current[series.id]
+        if (!section) continue
+
+        const rect = section.getBoundingClientRect()
+        const viewportMiddle = window.innerHeight / 2
+
+        if (rect.top < viewportMiddle && rect.bottom > viewportMiddle) {
+          return { section, seriesId: series.id }
+        }
+      }
+      return { section: null, seriesId: null }
+    }
+
+    const handleTouchStart = (e) => {
+      const { section, seriesId } = findActiveSection()
+      if (!section || !seriesId) return
+
+      const series = UI_SERIES.find(s => s.id === seriesId)
+      if (!series || series.images.length <= 1) return
+
+      touchStartY.current = e.touches[0].clientY
+      touchStartScrollY.current = window.scrollY
+      activeTouchSeriesId.current = seriesId
+    }
+
+    const handleTouchMove = (e) => {
+      if (touchStartY.current === null || !activeTouchSeriesId.current) return
+
+      const targetSeriesId = activeTouchSeriesId.current
+      const series = UI_SERIES.find(s => s.id === targetSeriesId)
+      if (!series) return
+
+      const imageCount = series.images.length
+      const currentIndex = currentImageIndex[targetSeriesId] || 0
+
+      const touchCurrentY = e.touches[0].clientY
+      const touchDeltaY = touchStartY.current - touchCurrentY
+
+      // Check if we're at the boundaries
+      const isAtStart = currentIndex === 0 && touchDeltaY < 0
+      const isAtEnd = currentIndex === imageCount - 1 && touchDeltaY > 0
+
+      // If at boundaries, allow normal scroll
+      if (isAtStart || isAtEnd) {
+        isScrollingThroughImages.current[targetSeriesId] = false
+        return
+      }
+
+      // We're in the middle of images, prevent default scroll behavior
+      e.preventDefault()
+      isScrollingThroughImages.current[targetSeriesId] = true
+
+      const scrollThreshold = 50 // Lower threshold for touch
+
+      // Update scroll progress
+      scrollProgressRef.current[targetSeriesId] = touchDeltaY
+
+      // Check if we should change image
+      if (Math.abs(scrollProgressRef.current[targetSeriesId]) >= scrollThreshold) {
+        const direction = scrollProgressRef.current[targetSeriesId] > 0 ? 1 : -1
+        const newIndex = Math.max(0, Math.min(imageCount - 1, currentIndex + direction))
+
+        if (newIndex !== currentIndex) {
+          setCurrentImageIndex(prev => ({
+            ...prev,
+            [targetSeriesId]: newIndex
+          }))
+
+          // Reset for next swipe
+          touchStartY.current = touchCurrentY
+          scrollProgressRef.current[targetSeriesId] = 0
+        }
+      }
+    }
+
+    const handleTouchEnd = () => {
+      touchStartY.current = null
+      touchStartScrollY.current = null
+      activeTouchSeriesId.current = null
+
+      // Reset scroll progress for all series
+      Object.keys(scrollProgressRef.current).forEach(key => {
+        scrollProgressRef.current[key] = 0
+      })
+    }
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
     }
   }, [currentImageIndex])
 
