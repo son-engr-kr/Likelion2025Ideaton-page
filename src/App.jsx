@@ -72,9 +72,54 @@ const UI_SERIES = [
         src: encodeImagePath('/images/ui_images/AI Chat Interface4.png'), 
         fixedCaption: '결과 확인'
       },
-      { 
-        src: encodeImagePath('/images/ui_images/AI Chat Interface5.png'), 
+      {
+        src: encodeImagePath('/images/ui_images/AI Chat Interface5.png'),
         fixedCaption: '완료'
+      }
+    ]
+  },
+  {
+    id: 'alarm',
+    title: '알림',
+    description: '중요한 일정과 집안일을 놓치지 않도록 스마트 알림을 제공합니다.',
+    images: [
+      {
+        src: encodeImagePath('/images/ui_images/Alarm.png'),
+        fixedCaption: '알림 메인'
+      },
+      {
+        src: encodeImagePath('/images/ui_images/Alarm2.png'),
+        fixedCaption: '알림 설정'
+      },
+      {
+        src: encodeImagePath('/images/ui_images/Alarm3.png'),
+        fixedCaption: '알림 목록'
+      },
+      {
+        src: encodeImagePath('/images/ui_images/Alarm4.png'),
+        fixedCaption: '알림 확인'
+      }
+    ]
+  },
+  {
+    id: 'schedule-integration',
+    title: '일정 통합',
+    description: '가족 구성원들의 일정을 한눈에 확인하고 조율할 수 있습니다.',
+    images: [
+      {
+        src: encodeImagePath('/images/ui_images/Schedule Integration.png'),
+        fixedCaption: '통합 일정'
+      }
+    ]
+  },
+  {
+    id: 'supplies-tracker',
+    title: '생필품 관리',
+    description: '가정 내 생필품 재고를 추적하고 자동으로 구매 알림을 받으세요.',
+    images: [
+      {
+        src: encodeImagePath('/images/ui_images/Supplies Tracker.png'),
+        fixedCaption: '생필품 추적'
       }
     ]
   }
