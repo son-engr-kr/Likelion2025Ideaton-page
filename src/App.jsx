@@ -474,7 +474,7 @@ function App() {
       <Route path="/" element={
         <div className="landing-page">
           <header className="header">
-            <h1 className="main-title">Cohabit AI</h1>
+            <h1 className="main-title">CoHabitAI</h1>
             <p className="subtitle">AI 매니저와 함께하는 룸메이트 생활</p>
           </header>
 
@@ -483,7 +483,7 @@ function App() {
             "누가 청소 할 차례였지?"<br />
             "룸메이트가 집 월세를 빨리 보내줘야 하는데.."<br /><br />
             더 이상 고민하지 마세요.<br />
-            Cohabit AI가 공정하게 조율해드립니다.
+            CoHabitAI가 공정하게 조율해드립니다.
             </p>
           </section>
 
